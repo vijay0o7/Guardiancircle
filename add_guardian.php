@@ -1,58 +1,53 @@
 <?php
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "gaurdian_circle";
-
-// Connect to MySQL
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Set header
 header('Content-Type: application/json');
+include "dbconn.php";
 
-// Check connection
-if ($conn->connect_error) {
+// Get data from POST
+$user_id = $_POST['user_id']; // who is adding the guardian
+$full_name = $_POST['full_name'];
+$email = $_POST['email'];
+$gender = $_POST['gender']; // Expect: Male, Female, Other
+
+// Optional: Validate gender value
+$allowed_genders = ['Male', 'Female', 'Other'];
+if (!in_array($gender, $allowed_genders)) {
     echo json_encode([
         "status" => "error",
-        "message" => "Connection failed: " . $conn->connect_error
+        "message" => "Invalid gender value."
     ]);
     exit;
 }
 
-// Get POST values
-$user_id = $_POST['user_id'] ?? null;
-$name = $_POST['name'] ?? null;
-$phone = $_POST['phone'] ?? null;
-$email = $_POST['email'] ?? null;
-$status = $_POST['status'] ?? 'pending';
-$added_at = date("Y-m-d H:i:s");
+// Optional: Check for duplicate guardian (email)
+$check = $conn->prepare("SELECT id FROM guardians WHERE user_id = ? AND email = ?");
+$check->bind_param("is", $user_id, $email);
+$check->execute();
+$result = $check->get_result();
 
-// Validate input
-if (!$user_id || !$name || !$phone || !$email) {
+if ($result->num_rows > 0) {
     echo json_encode([
         "status" => "error",
-        "message" => "Missing required fields"
+        "message" => "Guardian with this email already exists."
     ]);
     exit;
 }
 
-// Insert guardian
-$sql = "INSERT INTO guardians (user_id, name, phone, email, status, added_at) VALUES (?, ?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("isssss", $user_id, $name, $phone, $email, $status, $added_at);
+// Insert new guardian
+$stmt = $conn->prepare("INSERT INTO guardians (user_id, full_name, email, gender) VALUES (?, ?, ?, ?)");
+$stmt->bind_param("isss", $user_id, $full_name, $email, $gender);
 
 if ($stmt->execute()) {
     echo json_encode([
         "status" => "success",
-        "message" => "Guardian added successfully"
+        "message" => "Guardian added successfully!",
+        "guardian_id" => $stmt->insert_id
     ]);
 } else {
     echo json_encode([
         "status" => "error",
-        "message" => "Insert failed: " . $stmt->error
+        "message" => "Failed to add guardian."
     ]);
 }
 
-$stmt->close();
 $conn->close();
 ?>

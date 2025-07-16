@@ -1,49 +1,26 @@
 <?php
-// DB Connection
-$host = "localhost";
-$user = "root";
-$password = "";
-$database = "gaurdian_circle";
+header('Content-Type: application/json');
+include "dbconn.php";
 
-$conn = new mysqli($host, $user, $password, $database);
+$sender_id = $_POST['sender_id'];
+$receiver_id = $_POST['receiver_id'];
+$message = $_POST['message'];
 
-// Check Connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Get POST Data
-$sender_id = $_POST['sender_id'] ?? null;
-$receiver_id = $_POST['receiver_id'] ?? null;
-$sent_message = $_POST['sent_message'] ?? null;
-$received_message = $_POST['received_message'] ?? null;
-$sent_at = date("Y-m-d H:i:s");
-
-// Input Validation
-if (!$sender_id || !$receiver_id || !$sent_message || !$received_message) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "All fields (sender_id, receiver_id, sent_message, received_message) are required."
-    ]);
-    exit;
-}
-
-// Prepare SQL Statement
-$stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, sent_at, sent_message, received_message) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("iisss", $sender_id, $receiver_id, $sent_at, $sent_message, $received_message);
+$stmt = $conn->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
+$stmt->bind_param("iis", $sender_id, $receiver_id, $message);
 
 if ($stmt->execute()) {
     echo json_encode([
         "status" => "success",
-        "message" => "Message inserted successfully."
+        "message_id" => $stmt->insert_id,
+        "sent_at" => date("Y-m-d H:i:s")
     ]);
 } else {
     echo json_encode([
         "status" => "error",
-        "message" => "Failed to insert message: " . $stmt->error
+        "message" => "Failed to send message"
     ]);
 }
 
-$stmt->close();
 $conn->close();
 ?>
