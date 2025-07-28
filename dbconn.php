@@ -19,11 +19,4 @@ if ($conn->connect_error) {
     $response['status'] = "success";
     $response['message'] = "Connected successfully";
 }
-
-// Encode the response to JSON format
-$json_response = json_encode($response);
-
-// Set the content type to application/json and output the response
-header('Content-Type: application/json');
-echo $json_response;
 ?>

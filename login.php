@@ -2,41 +2,36 @@
 header('Content-Type: application/json');
 include "dbconn.php";
 
-$email = $_POST['email'];
+$input = $_POST['email_or_phone'];  // Single field for email or phone
 $password = $_POST['password'];
 
-// Prepare and execute the SQL statement
-$stmt = $conn->prepare("SELECT * FROM auth WHERE email = ?");
-$stmt->bind_param("s", $email);
+$stmt = $conn->prepare("SELECT * FROM auth WHERE email = ? OR phone_number = ?");
+$stmt->bind_param("ss", $input, $input);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Check if login was successful
 if ($result->num_rows === 1) {
     $user = $result->fetch_assoc();
 
-    // In production, use password_verify($password, $user['password'])
-    if ($user['password'] === $password) {
+    if (password_verify($password, $user['password'])) {
         echo json_encode([
             "status" => "success",
-            "message" => "Login successful!",
-            "user" => [
-                "id" => $user['id'],
-                "name" => $user['name'],
-                "email" => $user['email'],
-                "phone" => $user['phone_number']
-            ]
+            "message" => "Login successful",
+            "name" => $user['name'],
+            "email" => $user['email'],
+            "phone_number" => $user['phone_number'],
+            "role" => $user['role']
         ]);
     } else {
         echo json_encode([
             "status" => "error",
-            "message" => "Invalid email or password."
+            "message" => "Invalid email/phone or password."
         ]);
     }
 } else {
     echo json_encode([
         "status" => "error",
-        "message" => "Invalid email or password."
+        "message" => "Invalid email/phone or password."
     ]);
 }
 
