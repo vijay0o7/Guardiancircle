@@ -20,7 +20,8 @@ if ($result->num_rows === 1) {
             "name" => $user['name'],
             "email" => $user['email'],
             "phone_number" => $user['phone_number'],
-            "role" => $user['role']
+            "role" => $user['role'],
+            "userId" => $user['s_no']
         ]);
     } else {
         echo json_encode([

@@ -12,7 +12,7 @@ if (empty($user_id)) {
     exit;
 }
 
-$stmt = $conn->prepare("SELECT id, user_id, name, email, phone, gender FROM guardians WHERE user_id = ?");
+$stmt = $conn->prepare("SELECT id, user_id, name, email, phone, gender, status FROM guardians WHERE user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
