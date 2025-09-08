@@ -11,6 +11,7 @@ $full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : null;
 $email     = isset($_POST['email']) ? trim($_POST['email']) : null;
 $phone     = isset($_POST['phone']) ? trim($_POST['phone']) : null;
 $gender    = isset($_POST['gender']) ? trim($_POST['gender']) : null;
+$user_name   = isset($_POST['user_name']) ? trim($_POST['user_name']) : null;
 
 // Check for missing fields
 $missing_fields = [];
@@ -19,6 +20,7 @@ if (empty($full_name)) $missing_fields[] = "full_name";
 if (empty($email))     $missing_fields[] = "email";
 if (empty($phone))     $missing_fields[] = "phone";
 if (empty($gender))    $missing_fields[] = "gender";
+if (empty($user_name))    $missing_fields[] = "user_namer";
 
 if (!empty($missing_fields)) {
     echo json_encode([
@@ -53,8 +55,8 @@ if ($result->num_rows > 0) {
 }
 
 // Insert guardian
-$stmt = $conn->prepare("INSERT INTO guardians (user_id, name, email, phone, gender) VALUES (?, ?, ?, ?, ?)");
-$stmt->bind_param("issss", $user_id, $full_name, $email, $phone, $gender);
+$stmt = $conn->prepare("INSERT INTO guardians (user_id, name, email, phone, gender, user_name ) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt->bind_param("isssss", $user_id, $full_name, $email, $phone, $gender, $user_name);
 
 if ($stmt->execute()) {
     echo json_encode([

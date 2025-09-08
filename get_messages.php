@@ -1,31 +1,39 @@
 <?php
-header('Content-Type: application/json');
 include "dbconn.php";
 
-$sender_id = $_GET['sender_id'];
-$receiver_id = $_GET['receiver_id'];
+if (isset($_GET['guardian_email'])) {
+    $guardian_email = $_GET['guardian_email'];
 
-$stmt = $conn->prepare("
-    SELECT * FROM messages 
-    WHERE 
-        (sender_id = ? AND receiver_id = ?) 
-        OR 
-        (sender_id = ? AND receiver_id = ?)
-    ORDER BY sent_at ASC
-");
-$stmt->bind_param("iiii", $sender_id, $receiver_id, $receiver_id, $sender_id);
-$stmt->execute();
-$result = $stmt->get_result();
+    // Get guardian_id from email
+    $stmt = $conn->prepare("SELECT id FROM guardians WHERE email = ?");
+    $stmt->bind_param("s", $guardian_email);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-$messages = [];
-while ($row = $result->fetch_assoc()) {
-    $messages[] = $row;
+    if ($row = $result->fetch_assoc()) {
+        $guardian_id = $row['id'];
+
+        // Now fetch messages
+        $stmt2 = $conn->prepare("SELECT id, user_id, message, created_at 
+                                 FROM user_messages 
+                                 WHERE guardian_id = ? 
+                                 ORDER BY created_at ASC");
+        $stmt2->bind_param("i", $guardian_id);
+        $stmt2->execute();
+        $res2 = $stmt2->get_result();
+
+        $messages = [];
+        while ($msg = $res2->fetch_assoc()) {
+            $messages[] = $msg;
+        }
+
+        echo json_encode($messages);
+
+    } else {
+        echo json_encode(["status" => "error", "message" => "guardian not found"]);
+    }
+
+} else {
+    echo json_encode(["status" => "error", "message" => "guardian_email is required"]);
 }
-
-echo json_encode([
-    "status" => "success",
-    "messages" => $messages
-]);
-
-$conn->close();
 ?>
